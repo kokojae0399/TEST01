@@ -304,6 +304,12 @@
             margin-bottom: 12px;
             border: 1px solid #EEEEEE;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .order-item:hover {
+            border-color: var(--primary-brown);
         }
 
         .order-item-header {
@@ -480,6 +486,7 @@
             <form id="orderForm" class="order-form">
                 <input type="text" id="orderName" placeholder="주문자 성함" required>
                 <input type="tel" id="orderPhone" placeholder="연락처 (예: 010-1234-5678)" required>
+                <input type="password" id="orderPassword" placeholder="조회용 비밀번호 (숫자 4자리)" maxlength="4" required>
                 <select id="orderProduct" required>
                     <option value="">상품을 선택해 주세요</option>
                     <option value="프리미엄 선물세트 5kg (55,000원)">프리미엄 선물세트 5kg (55,000원)</option>
@@ -493,7 +500,7 @@
 
             <!-- 실시간 주문 현황 목록 -->
             <div class="order-list-box">
-                <h3>최근 주문 접수 현황</h3>
+                <h3>최근 주문 접수 현황 (클릭시 비밀번호 확인 후 상세보기)</h3>
                 <div id="orderList">
                     <p style="text-align: center; color: #888; padding: 20px 0;">주문 내역을 불러오는 중...</p>
                 </div>
@@ -514,6 +521,8 @@
         const SUPABASE_URL = "https://xalskntjvvcqtqiqkxah.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_kgE7fuxf5BlGZ2GSLXVvUA_HX5Ap__0";
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let fetchedOrders = [];
 
         document.addEventListener("DOMContentLoaded", function () {
             // 스크롤 감지 Fade-in 효과
@@ -561,13 +570,15 @@
                 return;
             }
 
-            if (!data || data.length === 0) {
+            fetchedOrders = data || [];
+
+            if (fetchedOrders.length === 0) {
                 orderListEl.innerHTML = '<p style="text-align: center; color: #888; padding: 20px 0;">아직 접수된 주문이 없습니다.</p>';
                 return;
             }
 
-            orderListEl.innerHTML = data.map(item => `
-                <div class="order-item">
+            orderListEl.innerHTML = fetchedOrders.map((item, index) => `
+                <div class="order-item" onclick="viewOrderDetail(${index})">
                     <div class="order-item-header">
                         <span>${maskName(item.name)} 님</span>
                         <span class="order-item-badge">${item.status || '접수완료'}</span>
@@ -580,12 +591,34 @@
             `).join('');
         }
 
+        // 상세 주문정보 확인 (비밀번호 확인)
+        function viewOrderDetail(index) {
+            const item = fetchedOrders[index];
+            if (!item) return;
+
+            const pwd = prompt("주문 등록 시 입력한 비밀번호 4자리를 입력해주세요:");
+            if (pwd === null) return; // 취소 클릭 시
+
+            if (pwd === item.password) {
+                alert(`[주문 상세 내역]\n\n` +
+                      `주문자: ${item.name}\n` +
+                      `연락처: ${item.phone}\n` +
+                      `상품: ${item.product}\n` +
+                      `배송지: ${item.address}\n` +
+                      `요청사항: ${item.message || '없음'}\n` +
+                      `진행상태: ${item.status || '접수완료'}`);
+            } else {
+                alert("비밀번호가 일치하지 않습니다.");
+            }
+        }
+
         // 주문 등록 폼 제출 이벤트
         document.getElementById("orderForm").addEventListener("submit", async function(e) {
             e.preventDefault();
 
             const name = document.getElementById("orderName").value.trim();
             const phone = document.getElementById("orderPhone").value.trim();
+            const password = document.getElementById("orderPassword").value.trim();
             const product = document.getElementById("orderProduct").value;
             const address = document.getElementById("orderAddress").value.trim();
             const message = document.getElementById("orderMessage").value.trim();
@@ -593,12 +626,12 @@
             const { data, error } = await supabase
                 .from('orders')
                 .insert([
-                    { name, phone, product, address, message }
+                    { name, phone, password, product, address, message }
                 ]);
 
             if (error) {
                 console.error("주문 등록 오류:", error);
-                alert("주문 접수 중 오류가 발생했습니다. 테이블 생성이 완료되었는지 확인해 주세요.");
+                alert("주문 접수 중 오류가 발생했습니다. 테이블 스키마(password 컬럼 유무)를 확인해 주세요.");
             } else {
                 alert("주문이 성공적으로 접수되었습니다!");
                 document.getElementById("orderForm").reset();
