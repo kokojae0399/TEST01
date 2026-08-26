@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
 
-    <!-- Supabase JS Client CDN -->
+    <!-- Supabase JS Client CDN (최신 v2) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -496,7 +496,7 @@
                 </select>
                 <input type="text" id="orderAddress" placeholder="배송지 주소" required>
                 <textarea id="orderMessage" rows="3" placeholder="배송 요청사항 (선택사항)"></textarea>
-                <button type="submit" class="btn">주문 신청하기</button>
+                <button type="submit" class="btn" id="submitBtn">주문 신청하기</button>
             </form>
 
             <!-- 실시간 주문 목록 -->
@@ -518,24 +518,27 @@
 
     <!-- JavaScript & Supabase 연동 스크립트 -->
     <script>
-        // 요청하신 Supabase 정보 정확히 적용 완료
         const SUPABASE_URL = "https://xalskntjvvcqtqiqkxah.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_kgE7fuxf5BlGZ2GSLXVvUA_HX5Ap__0";
-        
-        // Supabase 클라이언트 생성
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPABASE_KEY = "sb_publishable_kgE7fuxf5BlGZ2GSLXVvUA_HX5Ap__0";
 
+        let supabaseClient = null;
         let fetchedOrders = [];
 
-        document.addEventListener("DOMContentLoaded", function () {
-            // 스크롤 감지 애니메이션
-            const observerOptions = {
-                root: null,
-                rootMargin: "0px",
-                threshold: 0.15
-            };
+        // Supabase 클라이언트 안전 초기화
+        function initSupabase() {
+            if (window.supabase && typeof window.supabase.createClient === 'function') {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            } else {
+                console.error("Supabase 라이브러리를 로드하지 못했습니다.");
+            }
+        }
 
-            const observer = new IntersectionObserver((entries, observer) => {
+        document.addEventListener("DOMContentLoaded", function () {
+            initSupabase();
+
+            // 스크롤 감지 애니메이션
+            const observerOptions = { root: null, rootMargin: "0px", threshold: 0.15 };
+            const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         entry.target.classList.add("visible");
@@ -543,14 +546,13 @@
                 });
             }, observerOptions);
 
-            const fadeElements = document.querySelectorAll(".fade-in");
-            fadeElements.forEach(el => observer.observe(el));
+            document.querySelectorAll(".fade-in").forEach(el => observer.observe(el));
 
-            // 데이터베이스에서 주문 목록 불러오기
+            // 주문 목록 가져오기
             fetchOrders();
         });
 
-        // 이름 마스킹 함수 (개인정보 보호용: 홍*동)
+        // 이름 마스킹 (홍*동)
         function maskName(name) {
             if (!name) return "";
             if (name.length <= 2) return name[0] + "*";
@@ -560,17 +562,28 @@
         // DB에서 최신 주문 목록 가져오기
         async function fetchOrders() {
             const orderListEl = document.getElementById("orderList");
-            
+
+            if (!supabaseClient) {
+                initSupabase();
+                if (!supabaseClient) {
+                    orderListEl.innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 20px 0;">Supabase SDK 로드 실패! 인터넷 연결을 확인해 주세요.</p>';
+                    return;
+                }
+            }
+
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('orders')
                     .select('*')
                     .order('created_at', { ascending: false })
                     .limit(10);
 
                 if (error) {
-                    console.error("주문 목록 불러오기 에러:", error);
-                    orderListEl.innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 20px 0;">주문 목록을 불러오지 못했습니다.<br><small>(Supabase 대시보드에서 orders 테이블 생성 및 RLS 권한을 확인해주세요)</small></p>';
+                    console.error("Supabase Select 에러:", error);
+                    orderListEl.innerHTML = `<p style="text-align: center; color: #d32f2f; padding: 20px 0;">
+                        <strong>DB 조회 실패:</strong> ${error.message}<br>
+                        <small>(SQL Editor에서 orders 테이블 및 policy 설정을 완료해주세요)</small>
+                    </p>`;
                     return;
                 }
 
@@ -594,8 +607,8 @@
                     </div>
                 `).join('');
             } catch (err) {
-                console.error("네트워크/연동 에러:", err);
-                orderListEl.innerHTML = '<p style="text-align: center; color: #888; padding: 20px 0;">데이터베이스 연동 확인 중 오류가 발생했습니다.</p>';
+                console.error("네트워크 에러:", err);
+                orderListEl.innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 20px 0;">네트워크 오류가 발생했습니다.</p>';
             }
         }
 
@@ -624,6 +637,12 @@
         document.getElementById("orderForm").addEventListener("submit", async function(e) {
             e.preventDefault();
 
+            if (!supabaseClient) initSupabase();
+
+            const submitBtn = document.getElementById("submitBtn");
+            submitBtn.disabled = true;
+            submitBtn.innerText = "처리 중...";
+
             const name = document.getElementById("orderName").value.trim();
             const phone = document.getElementById("orderPhone").value.trim();
             const password = document.getElementById("orderPassword").value.trim();
@@ -632,23 +651,26 @@
             const message = document.getElementById("orderMessage").value.trim();
 
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('orders')
                     .insert([
                         { name, phone, password, product, address, message }
                     ]);
 
                 if (error) {
-                    console.error("주문 등록 에러:", error);
-                    alert("주문 접수 중 오류가 발생했습니다. (Supabase 'orders' 테이블 컬럼 명칭 확인 필요)");
+                    console.error("주문 등록 에러 상세:", error);
+                    alert("주문 접수 실패!\n원인: " + error.message + "\n\n(Supabase 테이블 컬럼과 RLS 권한을 확인해주세요)");
                 } else {
                     alert("주문이 성공적으로 접수되었습니다!");
                     document.getElementById("orderForm").reset();
-                    fetchOrders(); // 등록 후 목록 자동 새로고침
+                    fetchOrders();
                 }
             } catch (err) {
                 console.error("서버 통신 실패:", err);
-                alert("서버 연결에 실패했습니다.");
+                alert("통신 중 오류가 발생했습니다.");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "주문 신청하기";
             }
         });
     </script>
