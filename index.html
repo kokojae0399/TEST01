@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>부자 사과농장 - 대한민국 최대 프리미엄 사과농장</title>
+
+    <!-- 나눔고딕 폰트 적용 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* 변수 설정: 짙은 갈색 & 흰색 테마 */
+        :root {
+            --primary-brown: #3E2723;
+            --secondary-brown: #5D4037;
+            --accent-red: #D32F2F;
+            --bg-light: #FAFAFA;
+            --bg-white: #FFFFFF;
+            --text-dark: #212121;
+            --text-light: #F5F5F5;
+        }
+
+        /* 기본 스타일 Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nanum Gothic', sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+            line-height: 1.6;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* 헤더 & 책갈피 네비게이션 */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--primary-brown);
+            color: var(--text-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: var(--accent-red);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 20px;
+        }
+
+        nav a {
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #FFCDD2;
+        }
+
+        /* 섹션 공통 스타일 */
+        section {
+            padding: 100px 8% 80px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            color: var(--primary-brown);
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 3rem;
+        }
+
+        /* 색상 구역 구분 */
+        .bg-white {
+            background-color: var(--bg-white);
+        }
+
+        .bg-brown {
+            background-color: var(--primary-brown);
+            color: var(--text-light);
+        }
+
+        .bg-brown .section-title {
+            color: var(--bg-white);
+        }
+
+        .bg-brown .section-subtitle {
+            color: #D7CCC8;
+        }
+
+        /* 메인 비주얼 (Hero) */
+        #hero {
+            background: linear-gradient(rgba(62, 39, 35, 0.8), rgba(62, 39, 35, 0.8)), 
+                        url('https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=1200&q=80') center/cover no-repeat;
+            color: var(--text-light);
+            text-align: center;
+            padding-top: 150px;
+        }
+
+        .hero-content h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: #E0E0E0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background-color: var(--accent-red);
+            color: white;
+            font-weight: 700;
+            border-radius: 4px;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #B71C1C;
+            transform: translateY(-2px);
+        }
+
+        /* 농장 소개 Grid */
+        .about-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .about-card {
+            background: var(--bg-light);
+            padding: 30px;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary-brown);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .about-card h3 {
+            font-size: 1.3rem;
+            color: var(--primary-brown);
+            margin-bottom: 10px;
+        }
+
+        /* 상품 소개 Cards */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .product-card {
+            background: var(--secondary-brown);
+            border-radius: 8px;
+            overflow: hidden;
+            text-align: center;
+            padding: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .product-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: #FFF;
+        }
+
+        .product-card p {
+            color: #D7CCC8;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+        }
+
+        .product-card .price {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #FFCDD2;
+        }
+
+        /* 고객 후기 */
+        .review-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .review-card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            max-width: 320px;
+            flex: 1 1 300px;
+        }
+
+        .review-card .stars {
+            color: #FFC107;
+            margin-bottom: 10px;
+        }
+
+        /* 문의하기 Form */
+        .contact-form {
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .contact-form input, 
+        .contact-form textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #CCC;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .contact-form button {
+            border: none;
+            cursor: pointer;
+        }
+
+        /* 스크롤 애니메이션 Class */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 푸터 */
+        footer {
+            background-color: #211512;
+            color: #A1887F;
+            text-align: center;
+            padding: 30px;
+            font-size: 0.85rem;
+        }
+
+        /* 모바일 반응형 */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            nav ul {
+                gap: 12px;
+            }
+
+            .hero-content h1 {
+                font-size: 2rem;
+            }
+
+            section {
+                padding: 80px 5% 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 헤더 & 책갈피 네비게이션 -->
+    <header>
+        <div class="logo">부자<span>사과농장</span></div>
+        <nav>
+            <ul>
+                <li><a href="#hero">홈</a></li>
+                <li><a href="#about">농장소개</a></li>
+                <li><a href="#products">대표상품</a></li>
+                <li><a href="#reviews">고객후기</a></li>
+                <li><a href="#contact">주문/문의</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- 메인 비주얼 -->
+    <section id="hero">
+        <div class="hero-content fade-in">
+            <h1>대한민국 최대 규모<br>자연을 담은 프리미엄 사과</h1>
+            <p>비옥한 토양과 맑은 햇살 아래 정성으로 재배한 100% 친환경 명품 사과</p>
+            <a href="#products" class="btn">상품 보러가기</a>
+        </div>
+    </section>
+
+    <!-- 농장 소개 (흰색 배경) -->
+    <section id="about" class="bg-white">
+        <h2 class="section-title fade-in">부자 사과농장 이야기</h2>
+        <p class="section-subtitle fade-in">수십 년의 노하우로 선도하는 대한민국 최대 서비스 농장입니다.</p>
+        
+        <div class="about-grid">
+            <div class="about-card fade-in">
+                <h3>국내 최대 재배 면적</h3>
+                <p>최첨단 스마트팜과 체계적인 수확 시스템으로 매년 최상의 신선도를 자랑하는 사과만을 생산합니다.</p>
+            </div>
+            <div class="about-card fade-in">
+                <h3>15브릭스 이상의 당도</h3>
+                <p>일조량이 풍부한 고지대에서 자라 높은 당도와 아삭한 식감이 특징인 명품 부사/홍로를 재배합니다.</p>
+            </div>
+            <div class="about-card fade-in">
+                <h3>직배송 당일 수확 시스템</h3>
+                <p>중유통 과정을 대폭 줄여 농장에서 갓 따낸 신선함을 당일 포장하여 고객의 집 앞까지 안전하게 전달합니다.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 대표 상품 (짙은 갈색 배경) -->
+    <section id="products" class="bg-brown">
+        <h2 class="section-title fade-in">대표 상품 안내</h2>
+        <p class="section-subtitle fade-in">부자 사과농장에서 자신 있게 추천하는 시그니처 라인업</p>
+        
+        <div class="product-grid">
+            <div class="product-card fade-in">
+                <h3>프리미엄 선물세트 5kg</h3>
+                <p>엄격한 선별 과정을 거친 대과 구성의 선물용 명품 사과</p>
+                <div class="price">55,000원</div>
+            </div>
+            <div class="product-card fade-in">
+                <h3>가정용 꿀사과 10kg</h3>
+                <p>온 가족이 매일 부담 없이 즐길 수 있는 고당도 아삭 사과</p>
+                <div class="price">68,000원</div>
+            </div>
+            <div class="product-card fade-in">
+                <h3>100% 생사과즙 (50포)</h3>
+                <p>물 한 방울 섞지 않고 갓 짠 진하고 건강한 자연 그대로의 맛</p>
+                <div class="price">35,000원</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 고객 후기 (흰색 배경) -->
+    <section id="reviews" class="bg-white">
+        <h2 class="section-title fade-in">구매 고객 실제 후기</h2>
+        <p class="section-subtitle fade-in">부자 사과농장을 경험하신 분들의 솔직한 이야기</p>
+        
+        <div class="review-container">
+            <div class="review-card fade-in">
+                <div class="stars">★★★★★</div>
+                <p>"명절 선물로 주문했는데 받는 분이 너무 만족해하셨어요. 껍질째 먹어도 정말 달고 신선합니다."</p>
+                <br><strong>- 김*진 님</strong>
+            </div>
+            <div class="review-card fade-in">
+                <div class="stars">★★★★★</div>
+                <p>"사과즙이 진해서 아이들 간식으로 매일 먹이고 있어요. 재구매 의사 200% 입니다!"</p>
+                <br><strong>- 이*훈 님</strong>
+            </div>
+            <div class="review-card fade-in">
+                <div class="stars">★★★★★</div>
+                <p>"마트에서 사 먹는 사과와 차원이 다르네요. 포장도 꼼꼼해서 상한 것 하나 없이 잘 받았습니다."</p>
+                <br><strong>- 박*영 님</strong>
+            </div>
+        </div>
+    </section>
+
+    <!-- 주문 및 문의 (짙은 갈색 배경) -->
+    <section id="contact" class="bg-brown">
+        <h2 class="section-title fade-in">주문 및 문의하기</h2>
+        <p class="section-subtitle fade-in">대량 구매 및 체험 문의는 아래 양식을 작성해 주세요.</p>
+        
+        <form class="contact-form fade-in" onsubmit="event.preventDefault(); alert('문의가 성공적으로 접수되었습니다.');">
+            <input type="text" placeholder="성함" required>
+            <input type="tel" placeholder="연락처" required>
+            <textarea rows="5" placeholder="문의 내용 (단체 주문, 농장 방문 문의 등)" required></textarea>
+            <button type="submit" class="btn">문의 보내기</button>
+        </form>
+    </section>
+
+    <!-- 푸터 -->
+    <footer>
+        <p>(주) 부자사과농장 | 대표자: 홍길동 | 사업자등록번호: 000-00-00000</p>
+        <p>주소: 경상북도 청송군 사과농장길 123 | 고객센터: 080-123-4567</p>
+        <p style="margin-top: 10px;">&copy; 2026 부자사과농장. All rights reserved.</p>
+    </footer>
+
+    <!-- JavaScript: 스크롤 애니메이션 및 책갈피 동작 -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // 스크롤 시 감지하여 Fade-in 애니메이션 실행
+            const observerOptions = {
+                root: null,
+                rootMargin: "0px",
+                threshold: 0.15
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("visible");
+                    }
+                });
+            }, observerOptions);
+
+            const fadeElements = document.querySelectorAll(".fade-in");
+            fadeElements.forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
