@@ -48,7 +48,7 @@
             color: inherit;
         }
 
-        /* 헤더 & 책갈피 네비게이션 */
+        /* 헤더 & 네비게이션 */
         header {
             position: fixed;
             top: 0;
@@ -290,7 +290,7 @@
         }
 
         .order-list-box h3 {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--primary-brown);
             margin-bottom: 15px;
             border-bottom: 2px solid var(--primary-brown);
@@ -305,11 +305,12 @@
             border: 1px solid #EEEEEE;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
             cursor: pointer;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, transform 0.2s;
         }
 
         .order-item:hover {
             border-color: var(--primary-brown);
+            transform: translateY(-2px);
         }
 
         .order-item-header {
@@ -332,7 +333,7 @@
             color: #666;
         }
 
-        /* 스크롤 애니메이션 Class */
+        /* 스크롤 애니메이션 */
         .fade-in {
             opacity: 0;
             transform: translateY(30px);
@@ -353,7 +354,7 @@
             font-size: 0.85rem;
         }
 
-        /* 모바일 반응형 */
+        /* 반응형 디바이스 설정 */
         @media (max-width: 900px) {
             .order-container {
                 grid-template-columns: 1fr;
@@ -384,7 +385,7 @@
 </head>
 <body>
 
-    <!-- 헤더 & 책갈피 네비게이션 -->
+    <!-- 헤더 & 네비게이션 -->
     <header>
         <div class="logo">부자<span>사과농장</span></div>
         <nav>
@@ -407,7 +408,7 @@
         </div>
     </section>
 
-    <!-- 농장 소개 (흰색 배경) -->
+    <!-- 농장 소개 -->
     <section id="about" class="bg-white">
         <h2 class="section-title fade-in">부자 사과농장 이야기</h2>
         <p class="section-subtitle fade-in">수십 년의 노하우로 선도하는 대한민국 최대 서비스 농장입니다.</p>
@@ -428,7 +429,7 @@
         </div>
     </section>
 
-    <!-- 대표 상품 (짙은 갈색 배경) -->
+    <!-- 대표 상품 -->
     <section id="products" class="bg-brown">
         <h2 class="section-title fade-in">대표 상품 안내</h2>
         <p class="section-subtitle fade-in">부자 사과농장에서 자신 있게 추천하는 시그니처 라인업</p>
@@ -452,7 +453,7 @@
         </div>
     </section>
 
-    <!-- 고객 후기 (흰색 배경) -->
+    <!-- 고객 후기 -->
     <section id="reviews" class="bg-white">
         <h2 class="section-title fade-in">구매 고객 실제 후기</h2>
         <p class="section-subtitle fade-in">부자 사과농장을 경험하신 분들의 솔직한 이야기</p>
@@ -476,7 +477,7 @@
         </div>
     </section>
 
-    <!-- 주문게시판 (흰색 배경) -->
+    <!-- 실시간 주문게시판 -->
     <section id="order" class="bg-white">
         <h2 class="section-title fade-in">실시간 주문게시판</h2>
         <p class="section-subtitle fade-in">원하시는 상품과 배송지 정보를 입력해 주시면 신속히 확인하여 배송해 드립니다.</p>
@@ -498,7 +499,7 @@
                 <button type="submit" class="btn">주문 신청하기</button>
             </form>
 
-            <!-- 실시간 주문 현황 목록 -->
+            <!-- 실시간 주문 목록 -->
             <div class="order-list-box">
                 <h3>최근 주문 접수 현황 (클릭시 비밀번호 확인 후 상세보기)</h3>
                 <div id="orderList">
@@ -517,15 +518,17 @@
 
     <!-- JavaScript & Supabase 연동 스크립트 -->
     <script>
-        // Supabase 초기화 설정
+        // 요청하신 Supabase 정보 정확히 적용 완료
         const SUPABASE_URL = "https://xalskntjvvcqtqiqkxah.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_kgE7fuxf5BlGZ2GSLXVvUA_HX5Ap__0";
+        
+        // Supabase 클라이언트 생성
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let fetchedOrders = [];
 
         document.addEventListener("DOMContentLoaded", function () {
-            // 스크롤 감지 Fade-in 효과
+            // 스크롤 감지 애니메이션
             const observerOptions = {
                 root: null,
                 rootMargin: "0px",
@@ -543,65 +546,70 @@
             const fadeElements = document.querySelectorAll(".fade-in");
             fadeElements.forEach(el => observer.observe(el));
 
-            // 주문 목록 불러오기 실행
+            // 데이터베이스에서 주문 목록 불러오기
             fetchOrders();
         });
 
-        // 이름 마스킹 처리 (개인정보 보호용: 홍*동)
+        // 이름 마스킹 함수 (개인정보 보호용: 홍*동)
         function maskName(name) {
             if (!name) return "";
             if (name.length <= 2) return name[0] + "*";
             return name[0] + "*".repeat(name.length - 2) + name[name.length - 1];
         }
 
-        // 주문 목록 불러오기 함수
+        // DB에서 최신 주문 목록 가져오기
         async function fetchOrders() {
             const orderListEl = document.getElementById("orderList");
             
-            const { data, error } = await supabase
-                .from('orders')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(10);
+            try {
+                const { data, error } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
 
-            if (error) {
-                console.error("주문 목록 불러오기 실패:", error);
-                orderListEl.innerHTML = '<p style="text-align: center; color: #888; padding: 20px 0;">주문 목록을 불러오지 못했습니다.<br><small>(Supabase에 orders 테이블 생성을 확인해 주세요)</small></p>';
-                return;
-            }
+                if (error) {
+                    console.error("주문 목록 불러오기 에러:", error);
+                    orderListEl.innerHTML = '<p style="text-align: center; color: #d32f2f; padding: 20px 0;">주문 목록을 불러오지 못했습니다.<br><small>(Supabase 대시보드에서 orders 테이블 생성 및 RLS 권한을 확인해주세요)</small></p>';
+                    return;
+                }
 
-            fetchedOrders = data || [];
+                fetchedOrders = data || [];
 
-            if (fetchedOrders.length === 0) {
-                orderListEl.innerHTML = '<p style="text-align: center; color: #888; padding: 20px 0;">아직 접수된 주문이 없습니다.</p>';
-                return;
-            }
+                if (fetchedOrders.length === 0) {
+                    orderListEl.innerHTML = '<p style="text-align: center; color: #888; padding: 20px 0;">아직 접수된 주문이 없습니다.</p>';
+                    return;
+                }
 
-            orderListEl.innerHTML = fetchedOrders.map((item, index) => `
-                <div class="order-item" onclick="viewOrderDetail(${index})">
-                    <div class="order-item-header">
-                        <span>${maskName(item.name)} 님</span>
-                        <span class="order-item-badge">${item.status || '접수완료'}</span>
+                orderListEl.innerHTML = fetchedOrders.map((item, index) => `
+                    <div class="order-item" onclick="viewOrderDetail(${index})">
+                        <div class="order-item-header">
+                            <span>${maskName(item.name)} 님</span>
+                            <span class="order-item-badge">${item.status || '접수완료'}</span>
+                        </div>
+                        <div class="order-item-info">
+                            <p><strong>상품:</strong> ${item.product}</p>
+                            <p style="font-size: 0.78rem; color: #999; margin-top: 4px;">${new Date(item.created_at).toLocaleString('ko-KR')}</p>
+                        </div>
                     </div>
-                    <div class="order-item-info">
-                        <p><strong>상품:</strong> ${item.product}</p>
-                        <p style="font-size: 0.78rem; color: #999; margin-top: 4px;">${new Date(item.created_at).toLocaleString('ko-KR')}</p>
-                    </div>
-                </div>
-            `).join('');
+                `).join('');
+            } catch (err) {
+                console.error("네트워크/연동 에러:", err);
+                orderListEl.innerHTML = '<p style="text-align: center; color: #888; padding: 20px 0;">데이터베이스 연동 확인 중 오류가 발생했습니다.</p>';
+            }
         }
 
-        // 상세 주문정보 확인 (비밀번호 확인)
+        // 비밀번호 확인 후 상세보기
         function viewOrderDetail(index) {
             const item = fetchedOrders[index];
             if (!item) return;
 
-            const pwd = prompt("주문 등록 시 입력한 비밀번호 4자리를 입력해주세요:");
-            if (pwd === null) return; // 취소 클릭 시
+            const pwd = prompt("주문 등록 시 입력하신 비밀번호(4자리)를 입력해주세요:");
+            if (pwd === null) return; 
 
-            if (pwd === item.password) {
+            if (String(pwd) === String(item.password)) {
                 alert(`[주문 상세 내역]\n\n` +
-                      `주문자: ${item.name}\n` +
+                      `주문자명: ${item.name}\n` +
                       `연락처: ${item.phone}\n` +
                       `상품: ${item.product}\n` +
                       `배송지: ${item.address}\n` +
@@ -612,7 +620,7 @@
             }
         }
 
-        // 주문 등록 폼 제출 이벤트
+        // 주문 신청 폼 제출
         document.getElementById("orderForm").addEventListener("submit", async function(e) {
             e.preventDefault();
 
@@ -623,19 +631,24 @@
             const address = document.getElementById("orderAddress").value.trim();
             const message = document.getElementById("orderMessage").value.trim();
 
-            const { data, error } = await supabase
-                .from('orders')
-                .insert([
-                    { name, phone, password, product, address, message }
-                ]);
+            try {
+                const { data, error } = await supabase
+                    .from('orders')
+                    .insert([
+                        { name, phone, password, product, address, message }
+                    ]);
 
-            if (error) {
-                console.error("주문 등록 오류:", error);
-                alert("주문 접수 중 오류가 발생했습니다. 테이블 스키마(password 컬럼 유무)를 확인해 주세요.");
-            } else {
-                alert("주문이 성공적으로 접수되었습니다!");
-                document.getElementById("orderForm").reset();
-                fetchOrders(); // 목록 새로고침
+                if (error) {
+                    console.error("주문 등록 에러:", error);
+                    alert("주문 접수 중 오류가 발생했습니다. (Supabase 'orders' 테이블 컬럼 명칭 확인 필요)");
+                } else {
+                    alert("주문이 성공적으로 접수되었습니다!");
+                    document.getElementById("orderForm").reset();
+                    fetchOrders(); // 등록 후 목록 자동 새로고침
+                }
+            } catch (err) {
+                console.error("서버 통신 실패:", err);
+                alert("서버 연결에 실패했습니다.");
             }
         });
     </script>
