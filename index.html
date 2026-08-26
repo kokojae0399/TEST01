@@ -10,6 +10,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
 
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         /* 변수 설정: 짙은 갈색 & 흰색 테마 */
         :root {
@@ -158,6 +161,8 @@
             color: white;
             font-weight: 700;
             border-radius: 4px;
+            border: none;
+            cursor: pointer;
             transition: background 0.3s, transform 0.2s;
         }
 
@@ -249,18 +254,25 @@
             margin-bottom: 10px;
         }
 
-        /* 문의하기 Form */
-        .contact-form {
-            max-width: 600px;
+        /* 주문게시판 레이아웃 */
+        .order-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            max-width: 1100px;
             margin: 0 auto;
             width: 100%;
+        }
+
+        .order-form {
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
 
-        .contact-form input, 
-        .contact-form textarea {
+        .order-form input, 
+        .order-form select, 
+        .order-form textarea {
             width: 100%;
             padding: 12px 15px;
             border: 1px solid #CCC;
@@ -268,9 +280,50 @@
             font-size: 1rem;
         }
 
-        .contact-form button {
-            border: none;
-            cursor: pointer;
+        .order-list-box {
+            background: #fdfdfd;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .order-list-box h3 {
+            font-size: 1.2rem;
+            color: var(--primary-brown);
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--primary-brown);
+            padding-bottom: 8px;
+        }
+
+        .order-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            border: 1px solid #EEEEEE;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .order-item-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .order-item-badge {
+            background-color: var(--primary-brown);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .order-item-info {
+            font-size: 0.88rem;
+            color: #666;
         }
 
         /* 스크롤 애니메이션 Class */
@@ -295,6 +348,12 @@
         }
 
         /* 모바일 반응형 */
+        @media (max-width: 900px) {
+            .order-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
             header {
                 flex-direction: column;
@@ -302,7 +361,9 @@
             }
 
             nav ul {
-                gap: 12px;
+                gap: 10px;
+                flex-wrap: wrap;
+                justify-content: center;
             }
 
             .hero-content h1 {
@@ -326,7 +387,7 @@
                 <li><a href="#about">농장소개</a></li>
                 <li><a href="#products">대표상품</a></li>
                 <li><a href="#reviews">고객후기</a></li>
-                <li><a href="#contact">주문/문의</a></li>
+                <li><a href="#order">주문게시판</a></li>
             </ul>
         </nav>
     </header>
@@ -336,7 +397,7 @@
         <div class="hero-content fade-in">
             <h1>대한민국 최대 규모<br>자연을 담은 프리미엄 사과</h1>
             <p>비옥한 토양과 맑은 햇살 아래 정성으로 재배한 100% 친환경 명품 사과</p>
-            <a href="#products" class="btn">상품 보러가기</a>
+            <a href="#order" class="btn">주문하러 가기</a>
         </div>
     </section>
 
@@ -409,17 +470,35 @@
         </div>
     </section>
 
-    <!-- 주문 및 문의 (짙은 갈색 배경) -->
-    <section id="contact" class="bg-brown">
-        <h2 class="section-title fade-in">주문 및 문의하기</h2>
-        <p class="section-subtitle fade-in">대량 구매 및 체험 문의는 아래 양식을 작성해 주세요.</p>
-        
-        <form class="contact-form fade-in" onsubmit="event.preventDefault(); alert('문의가 성공적으로 접수되었습니다.');">
-            <input type="text" placeholder="성함" required>
-            <input type="tel" placeholder="연락처" required>
-            <textarea rows="5" placeholder="문의 내용 (단체 주문, 농장 방문 문의 등)" required></textarea>
-            <button type="submit" class="btn">문의 보내기</button>
-        </form>
+    <!-- 주문게시판 (흰색 배경) -->
+    <section id="order" class="bg-white">
+        <h2 class="section-title fade-in">실시간 주문게시판</h2>
+        <p class="section-subtitle fade-in">원하시는 상품과 배송지 정보를 입력해 주시면 신속히 확인하여 배송해 드립니다.</p>
+
+        <div class="order-container fade-in">
+            <!-- 주문 등록 폼 -->
+            <form id="orderForm" class="order-form">
+                <input type="text" id="orderName" placeholder="주문자 성함" required>
+                <input type="tel" id="orderPhone" placeholder="연락처 (예: 010-1234-5678)" required>
+                <select id="orderProduct" required>
+                    <option value="">상품을 선택해 주세요</option>
+                    <option value="프리미엄 선물세트 5kg (55,000원)">프리미엄 선물세트 5kg (55,000원)</option>
+                    <option value="가정용 꿀사과 10kg (68,000원)">가정용 꿀사과 10kg (68,000원)</option>
+                    <option value="100% 생사과즙 50포 (35,000원)">100% 생사과즙 50포 (35,000원)</option>
+                </select>
+                <input type="text" id="orderAddress" placeholder="배송지 주소" required>
+                <textarea id="orderMessage" rows="3" placeholder="배송 요청사항 (선택사항)"></textarea>
+                <button type="submit" class="btn">주문 신청하기</button>
+            </form>
+
+            <!-- 실시간 주문 현황 목록 -->
+            <div class="order-list-box">
+                <h3>최근 주문 접수 현황</h3>
+                <div id="orderList">
+                    <p style="text-align: center; color: #888; padding: 20px 0;">주문 내역을 불러오는 중...</p>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- 푸터 -->
@@ -429,10 +508,15 @@
         <p style="margin-top: 10px;">&copy; 2026 부자사과농장. All rights reserved.</p>
     </footer>
 
-    <!-- JavaScript: 스크롤 애니메이션 및 책갈피 동작 -->
+    <!-- JavaScript & Supabase 연동 스크립트 -->
     <script>
+        // Supabase 초기화 설정
+        const SUPABASE_URL = "https://xalskntjvvcqtqiqkxah.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_kgE7fuxf5BlGZ2GSLXVvUA_HX5Ap__0";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         document.addEventListener("DOMContentLoaded", function () {
-            // 스크롤 시 감지하여 Fade-in 애니메이션 실행
+            // 스크롤 감지 Fade-in 효과
             const observerOptions = {
                 root: null,
                 rootMargin: "0px",
@@ -449,6 +533,77 @@
 
             const fadeElements = document.querySelectorAll(".fade-in");
             fadeElements.forEach(el => observer.observe(el));
+
+            // 주문 목록 불러오기 실행
+            fetchOrders();
+        });
+
+        // 이름 마스킹 처리 (개인정보 보호용: 홍*동)
+        function maskName(name) {
+            if (!name) return "";
+            if (name.length <= 2) return name[0] + "*";
+            return name[0] + "*".repeat(name.length - 2) + name[name.length - 1];
+        }
+
+        // 주문 목록 불러오기 함수
+        async function fetchOrders() {
+            const orderListEl = document.getElementById("orderList");
+            
+            const { data, error } = await supabase
+                .from('orders')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            if (error) {
+                console.error("주문 목록 불러오기 실패:", error);
+                orderListEl.innerHTML = '<p style="text-align: center; color: #888; padding: 20px 0;">주문 목록을 불러오지 못했습니다.<br><small>(Supabase에 orders 테이블 생성을 확인해 주세요)</small></p>';
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                orderListEl.innerHTML = '<p style="text-align: center; color: #888; padding: 20px 0;">아직 접수된 주문이 없습니다.</p>';
+                return;
+            }
+
+            orderListEl.innerHTML = data.map(item => `
+                <div class="order-item">
+                    <div class="order-item-header">
+                        <span>${maskName(item.name)} 님</span>
+                        <span class="order-item-badge">${item.status || '접수완료'}</span>
+                    </div>
+                    <div class="order-item-info">
+                        <p><strong>상품:</strong> ${item.product}</p>
+                        <p style="font-size: 0.78rem; color: #999; margin-top: 4px;">${new Date(item.created_at).toLocaleString('ko-KR')}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 주문 등록 폼 제출 이벤트
+        document.getElementById("orderForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById("orderName").value.trim();
+            const phone = document.getElementById("orderPhone").value.trim();
+            const product = document.getElementById("orderProduct").value;
+            const address = document.getElementById("orderAddress").value.trim();
+            const message = document.getElementById("orderMessage").value.trim();
+
+            const { data, error } = await supabase
+                .from('orders')
+                .insert([
+                    { name, phone, product, address, message }
+                ]);
+
+            if (error) {
+                console.error("주문 등록 오류:", error);
+                alert("주문 접수 중 오류가 발생했습니다. 테이블 생성이 완료되었는지 확인해 주세요.");
+            } else {
+                alert("주문이 성공적으로 접수되었습니다!");
+                document.getElementById("orderForm").reset();
+                fetchOrders(); // 목록 새로고침
+            }
         });
     </script>
 </body>
